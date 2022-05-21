@@ -43,8 +43,3 @@ def lookup_music_info(musicId):
     
     disconnect_from_db(conn, cur)
     return {'title': result[0][0], 'artist': result[0][1]}
-
-if __name__ == "__main__":
-    conn, cur = connect_to_db()
-    print(lookup_music_info(174749))
-    disconnect_from_db(conn, cur)

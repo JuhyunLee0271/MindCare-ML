@@ -64,10 +64,10 @@ class extractor:
         return keywords
 
 class Keyword_Extractor:
-    def __init__(self, PATH = '../keyword_extract/stopwords-ko.txt', 
-                JVM_PATH = '/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home/bin/java'):
+    def __init__(self, PATH = './requirements/stopwords-ko.txt'):
         self.path = PATH
-        self.okt = Okt(jvmpath=JVM_PATH)
+        self.okt = Okt()
+        
         # load saved korean stopwords
         with open(self.path, 'r') as f:
             self.stopwords = [word.rstrip('\n') for word in f.readlines()]
@@ -196,3 +196,7 @@ class BERTDataset(Dataset):
 
     def __len__(self):
         return (len(self.labels)) 
+
+if __name__ == "__main__":
+    model = Keyword_Extractor()
+    
