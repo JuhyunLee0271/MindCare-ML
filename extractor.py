@@ -86,9 +86,9 @@ class Sentiment_Extractor:
         
         # Setting Hyper-parameters
         self.max_len = 64
-        self.batch_size = 32
+        self.batch_size = 64
         self.warmup_ratio = 0.1
-        self.num_epochs = 20
+        self.num_epochs = 10
         self.max_grad_norm = 1
         self.log_interval = 100
         self.learning_rate = 10e-5
@@ -111,32 +111,31 @@ class Sentiment_Extractor:
     
     # Return Prediction of Emotion for diary content 
     def run(self, sentence):
-        data = [sentence, '0']
-        dataset_another = [data]
-        
-        another_test = BERTDataset(dataset_another, 0, 1, self.tok, self.max_len, True, False)
-        test_dataloader = torch.utils.data.DataLoader(
-                        another_test, batch_size=self.batch_size, num_workers=5)
-        
-        self.model.eval()
-        
-        for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(test_dataloader):
-            token_ids = token_ids.long().to(self.device)
-            segment_ids = segment_ids.long().to(self.device)
+        probability = [0, 0, 0, 0, 0] # [중립, 걱정, 슬픔, 분노, 행복]
+
+        for s in kss.split_sentences(sentence):
+            data = [s, '0']
+            dataset_another = [data]
+            another_test = BERTDataset(dataset_another, 0, 1, self.tok, self.max_len, True, False)
+            test_dataloader = torch.utils.data.DataLoader(another_test, batch_size=self.batch_size, num_workers=4)
+            self.model.eval()
             
-            valid_length = valid_length
-            label = label.long().to(self.device)
-            
-            out = self.model(token_ids, valid_length, segment_ids)
-            for i in out:
-                logits = i
-                logits = logits.detach().cpu().numpy()
-                probability = []
-                logits = np.round(self.new_softmax(logits), 3).tolist()
-                for logit in logits:
-                    probability.append(np.round(logit, 3))
-                emotion = self.emo_dict[np.argmax(logits)]
-            return emotion
+            for batch_id, (token_ids, valid_length, segment_ids, label) in enumerate(test_dataloader):
+                token_ids = token_ids.long().to(self.device)
+                segment_ids = segment_ids.long().to(self.device)
+                
+                valid_length = valid_length
+                label = label.long().to(self.device)
+                
+                out = self.model(token_ids, valid_length, segment_ids)
+                for i in out:
+                    logits = i
+                    logits = logits.detach().cpu().numpy()
+                    logits = np.round(self.new_softmax(logits), 3).tolist()
+                    for i in range(len(logits)):
+                        probability[i] += np.round(logits[i], 3)
+        
+        return self.emo_dict[np.argmax([p/len(sentence) for p in probability])]
         
 """
 Helper Class for KoBERT
@@ -188,6 +187,6 @@ class BERTDataset(Dataset):
         return (len(self.labels)) 
 
 if __name__ == "__main__":
-    kobert = Sentiment_Extractor()
-    text = "오늘 날씨도 너무 좋고 하던 일도 잘 풀려서 기분이 좋았어"
-    print(kobert.run(text))
+    text = "오늘 약속이 있어서 친구와 강남에서 만났다. 오랜만에 친구들을 보니 정말 기분이 좋았다. 오랜만에 내가 좋아하는 친구들을 보며 같이 맛있는 음식을 먹을 수 있어서 좋았다."
+    ext = extractor()
+    print(ext.extract_sentiment_from_diary(text), ext.extract_keyword_from_diary(text))
