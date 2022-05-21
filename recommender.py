@@ -33,6 +33,7 @@ METHODS
     
 """
 import random
+
 from dp_api import connect_to_db, disconnect_from_db
 import numpy as np
 from gensim.models import FastText
@@ -46,8 +47,8 @@ class recommender:
     # recommend 20 musics from user's emotion and tags
     def recommend_music_with_tags(self, *args):
         tags = [*args]
-        self.music_recommender.run(tags)
-        return [{'Title': '밤 편지', 'Artist': '아이유'}, {'Title': '가나다라', 'Artist': '박재범'}]
+        recom_musics = self.music_recommender.run(tags)
+        return recom_musics
 
     # recommend 3 foods from user's emotion
     def recommend_food_with_emotion(self, emotion: str):
@@ -56,12 +57,12 @@ class recommender:
 
     # recommend 2 behaviors from user's emotion
     def recommend_behavior_with_emotion(self, emotion: str):
-        # return self.behavior_recommender.run(emotion)
-        return [{'behavior1': '산책하기'}, {'behavior2': '영화보기'}]
+        recom_bahaviors = self.behavior_recommender(emotion)
+        return recom_bahaviors
     
 class Music_recommender:
     def __init__(self):
-        self.model = FastText.load('../model/trained_fasttext.model')
+        self.model = FastText.load('./model/trained_fasttext.model')
     
     # load each cluster's tags 
     def load_cluster_tags(self):
@@ -172,3 +173,7 @@ class Behavior_recommender:
         
         disconnect_from_db(conn, cur)
         return result[random.randint(0, len(result)-1)]
+
+if __name__ == "__main__":
+    recom = recommender()
+    print(recom.recommend_music_with_tags('슬픔'))
