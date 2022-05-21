@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from dp_api import lookup_music_info
 from controller import main_controller
 
 app = Flask(__name__)
+CORS(app)
 controller = main_controller()
 
 # 마이페이지에서 music의 정보를 넘기는 API
@@ -21,6 +23,7 @@ def request_music_info():
 def weather_recommendation():
     weather = request.args.get('weather')
     time = request.args.get('time')
+    print(weather, time)
     if not weather or not time:
         return 'Bad Request!'
     
@@ -62,4 +65,4 @@ def diary_recommendation():
         ) if music_list and food_list and behavior_list else "There is no Recommendation corresponding to that emotion!"
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=5001, debug=True)
