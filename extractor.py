@@ -19,22 +19,15 @@ METHODS
             {'keyword3': '쉑쉑버거'}
         ]
 """
-"""
-!pip install mxnet
-!pip install gluonnlp pandas tqdm
-!pip install sentencepiece
-!pip install transformers==3.0.2
-!pip install torch
-!pip install git+https://git@github.com/SKTBrain/KoBERT.git@master
-"""
 
-# requirements
+# requirements for keyword extract
 from krwordrank.word import summarize_with_keywords
 from krwordrank.hangle import normalize
 from konlpy.tag import Okt
 import kss
 import numpy as np
-"""
+
+# requirements for KoBERT
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -43,10 +36,8 @@ from torch.utils.data import Dataset, DataLoader
 import gluonnlp as nlp
 import numpy as np
 from tqdm import tqdm, tqdm_notebook
-
 from kobert.utils import get_tokenizer
 from kobert.pytorch_kobert import get_pytorch_kobert_model
-"""
 
 class extractor:
     def __init__(self):
@@ -67,7 +58,7 @@ class Keyword_Extractor:
     def __init__(self, PATH = './requirements/stopwords-ko.txt'):
         self.path = PATH
         self.okt = Okt()
-        
+
         # load saved korean stopwords
         with open(self.path, 'r') as f:
             self.stopwords = [word.rstrip('\n') for word in f.readlines()]
@@ -108,8 +99,7 @@ class Sentiment_Extractor:
 
         # Load tokenizer
         self.tokenizer = get_tokenizer()
-        self.tok = nlp.data.BERTSPTokenizer(tokenizer, vocab, lower=False)
-        
+        self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
         
     # Define softmax Function
     def new_softmax(self, a):
@@ -198,5 +188,6 @@ class BERTDataset(Dataset):
         return (len(self.labels)) 
 
 if __name__ == "__main__":
-    model = Keyword_Extractor()
-    
+    kobert = Sentiment_Extractor()
+    text = "오늘 날씨도 너무 좋고 하던 일도 잘 풀려서 기분이 좋았어"
+    print(kobert.run(text))
