@@ -94,7 +94,7 @@ class Sentiment_Extractor:
         self.learning_rate = 10e-5
         
         # Load pretrained model
-        self.model = torch.load('./model/trained_kobert.pt')
+        self.model = BERTClassifier(self.bertmodel, dr_rate=0.5).to(self.device)
         self.model.load_state_dict(torch.load('./model/model_state_dict.pt'))
 
         # Load tokenizer
