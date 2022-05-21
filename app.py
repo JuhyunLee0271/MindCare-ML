@@ -21,11 +21,14 @@ def request_music_info():
 # 날씨/시간으로 음악 추천 (일기 쓰기 전에 첫 페이지)
 @app.route('/music/weather', methods=["GET"])
 def weather_recommendation():
+    time_convert = {0: '새벽', 1: '아침', 2: '낮', 3: '밤'}
     weather = request.args.get('weather')
     time = request.args.get('time')
-    print(weather, time)
+
     if not weather or not time:
         return 'Bad Request!'
+
+    time = time_convert[int(time.split(':')[0])//6]
     
     music_list = []
     music_list = controller.music_recommend(
