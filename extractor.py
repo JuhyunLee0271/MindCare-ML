@@ -24,7 +24,7 @@ METHODS
 from krwordrank.word import summarize_with_keywords
 from krwordrank.hangle import normalize
 from konlpy.tag import Okt
-import kss
+from kss import split_sentences
 import numpy as np
 
 # requirements for KoBERT
@@ -58,7 +58,7 @@ class Keyword_Extractor:
     def __init__(self, PATH = './requirements/stopwords-ko.txt'):
         self.path = PATH
         self.okt = Okt()
-
+        
         # load saved korean stopwords
         with open(self.path, 'r') as f:
             self.stopwords = [word.rstrip('\n') for word in f.readlines()]
@@ -66,7 +66,7 @@ class Keyword_Extractor:
     def run(self, text: str):
         try:
             sentences = [normalize(sentence, english = True, number = True).replace('.', '') 
-                        for sentence in kss.split_sentences(text)]
+                        for sentence in split_sentences(text)]
             
             keywords = summarize_with_keywords(
                 sentences, min_count = 2, max_length = 10,
@@ -113,7 +113,7 @@ class Sentiment_Extractor:
     def run(self, sentence):
         probability = [0, 0, 0, 0, 0] # [중립, 걱정, 슬픔, 분노, 행복]
 
-        for s in kss.split_sentences(sentence):
+        for s in split_sentences(sentence):
             data = [s, '0']
             dataset_another = [data]
             another_test = BERTDataset(dataset_another, 0, 1, self.tok, self.max_len, True, False)
@@ -186,7 +186,3 @@ class BERTDataset(Dataset):
     def __len__(self):
         return (len(self.labels)) 
 
-if __name__ == "__main__":
-    text = "오늘 약속이 있어서 친구와 강남에서 만났다. 오랜만에 친구들을 보니 정말 기분이 좋았다. 오랜만에 내가 좋아하는 친구들을 보며 같이 맛있는 음식을 먹을 수 있어서 좋았다."
-    ext = extractor()
-    print(ext.extract_sentiment_from_diary(text), ext.extract_keyword_from_diary(text))

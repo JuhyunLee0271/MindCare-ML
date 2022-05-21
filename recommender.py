@@ -57,7 +57,7 @@ class recommender:
 
     # recommend 2 behaviors from user's emotion
     def recommend_behavior_with_emotion(self, emotion: str):
-        recom_bahaviors = self.behavior_recommender(emotion)
+        recom_bahaviors = self.behavior_recommender.run(emotion)
         return recom_bahaviors
     
 class Music_recommender:
@@ -165,8 +165,10 @@ class Behavior_recommender:
         
     def run(self, emotion: str):
         conn, cur = connect_to_db()
-         
-        cur.execute("SELECT `name`, content FROM BEHAVIOR WHERE label = ?", [self.emo_dict[emotion]])
+        
+        query = "SELECT `name`, content FROM BEHAVIOR WHERE label = %s"
+        param = (self.emo_dict[emotion])
+        cur.execute(query, param)
         result = cur.fetchall()
         if not result:
             return ""

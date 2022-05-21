@@ -48,7 +48,7 @@ def diary_recommendation():
     emotion = controller.sentiment_extract()
     keywords = controller.keyword_extract()
     
-    if emotion and keywords:
+    if emotion:
         # Recommend music/food/behavior with emotion/keywords
         music_list = controller.music_recommend(emotion = emotion, keywords = keywords)
         food_list = controller.food_recommend(emotion = emotion)
@@ -62,4 +62,4 @@ def diary_recommendation():
         ) if music_list and food_list and behavior_list else "There is no Recommendation corresponding to that emotion!"
 
 if __name__ == "__main__":
-    app.run(host = "0.0.0.0", port = 5001, debug=True)
+    app.run(host='0.0.0.0', port=5001)
