@@ -66,7 +66,7 @@ class Keyword_Extractor:
     def run(self, text: str):
         try:
             sentences = [normalize(sentence, english = True, number = True).replace('.', '') 
-                        for sentence in split_sentences(text)]
+                        for sentence in split_sentences(text, backend = 'None')]
             
             keywords = summarize_with_keywords(
                 sentences, min_count = 2, max_length = 10,
@@ -113,7 +113,7 @@ class Sentiment_Extractor:
     def run(self, sentence):
         probability = [0, 0, 0, 0, 0] # [중립, 걱정, 슬픔, 분노, 행복]
 
-        for s in split_sentences(sentence):
+        for s in split_sentences(sentence, backend = 'None'):
             data = [s, '0']
             dataset_another = [data]
             another_test = BERTDataset(dataset_another, 0, 1, self.tok, self.max_len, True, False)
