@@ -33,7 +33,6 @@ METHODS
     
 """
 import random
-
 from dp_api import connect_to_db, disconnect_from_db
 import numpy as np
 from gensim.models import FastText
@@ -45,15 +44,22 @@ class recommender:
         self.behavior_recommender = Behavior_recommender()
     
     # recommend 20 musics from user's emotion and tags
-    def recommend_music_with_tags(self, *args):
-        tags = [*args]
-        recom_musics = self.music_recommender.run(tags)
+    def recommend_music_with_tags(self, **kwargs):
+        if 'weather' in kwargs and 'time' in kwargs:
+            recom_musics = self.music_recommender.run(
+                weather = kwargs['weather'], time = kwargs['time'])
+        elif 'emotion' in kwargs:
+            recom_musics = self.music_recommender.run(
+                emotion = kwargs['emotion'], keywords = kwargs['keywords'])
+        else:
+            print("Invalid parameters passed(weather/time or emotion/keywords)")
+            return None
         return recom_musics
 
     # recommend 3 foods from user's emotion
     def recommend_food_with_emotion(self, emotion: str):
-        # self.food_recommender.run(emotion)
-        return [{'food1': '엽떡'}, {'food2': '제육'}, {'food3': '고추바사삭'}]
+        recom_foods = self.food_recommender.run(emotion)
+        return recom_foods
 
     # recommend 2 behaviors from user's emotion
     def recommend_behavior_with_emotion(self, emotion: str):
@@ -94,14 +100,24 @@ class Music_recommender:
                 for keyword in keywords:
                     sim += self.model.wv.similarity(keyword, tag)
             similarities.append(sim)
-        
-        return np.argsort(similarities)[::-1][:self.n_clusters//10]
+        return np.argsort(similarities)[::-1][:self.n_clusters//5]
 
-    # recommend 20 musics
-    # 10 musics - most similar with keywords
-    # another 10 musics - select randomly with weight probability(similarity + cnt)
-    def run(self, keywords: list):
-        sim_clusters = self.find_similar_clusters(keywords)
+    # recommend 20 musics randomly with weights
+    def run(self, **kwargs):
+        isWeather, isNeutral = False, False
+        isWeather = False
+        if 'weather' in kwargs and 'time' in kwargs:
+            keywords = [kwargs['weather'], kwargs['time']]
+            sim_clusters = self.find_similar_clusters(keywords)
+            isWeather = True
+        
+        else:
+            if kwargs['emotion'] == '중립':
+                keywords = ['기쁨', *kwargs['keywords'], '슬픔']
+            
+            keywords = [kwargs['emotion'], *kwargs['keywords']]
+            sim_clusters = self.find_similar_clusters(keywords[0])
+        
         conn, cur = connect_to_db()
 
         # load similar cluster's musics
@@ -112,21 +128,34 @@ class Music_recommender:
             cur.execute(query, param)
             target_music.extend(cur.fetchall())
         
-        # calculate similarities each music
-        res, result = [], []
-        for musicId, tags, cnt in target_music:
-            sim = 0
-            tags = tags.split()
-            for tag in tags:
-                for keyword in keywords:
-                    sim += self.model.wv.similarity(tag, keyword)
-            cnt_weight = np.log(cnt)
-            res.append([musicId, 10*sim/(len(tags)*len(keywords)) + cnt_weight])
+        # calculate similarities each musics
+        res = []
         
+        # weather/time 
+        if not flag:
+            for musicId, tags, cnt in target_music:
+                sim = 0
+                for tag in tags.split():
+                    for keyword in keywords:
+                        sim += self.model.wv.similarity(tag, keyword)
+                cnt_weight = np.log(cnt)
+                res.append([musicId, 10*sim/(len(tags)*len(keywords)) + cnt_weight])
+    
+        # emotion/keywords 
+        else:
+            for musicId, tags, cnt in target_music:
+                sim = 0
+                for tag in tags.split():
+                    for keyword in keywords:
+                        if keyword == kwargs['emotion']: sim += 10*self.model.wv.similarity(tag, keyword)
+                        else: sim += self.model.wv.similarity(tag, keyword)
+                cnt_weight = np.log(cnt)
+                res.append([musicId, 10*sim/(len(tags)*len(keywords)) + cnt_weight])
+
         res.sort(key=lambda x:-x[1])
-
+        
         result = [musicId for musicId, sim in res[:10]]
-
+        
         musicId = [musicId for musicId, sim in res[10:]]
         weights = [sim for musicId, sim in res[10:]]
         weights = [sim / sum(weights) for sim in weights]
@@ -134,7 +163,9 @@ class Music_recommender:
         result.extend(np.random.choice(
             musicId, p = weights, size = 10
         ))
-
+        
+        random.shuffle(result)
+                
         recom_musics = []
         query = "SELECT title, artist FROM MUSIC WHERE musicId = %s"
         for m_id in result:
@@ -157,7 +188,7 @@ class Food_recommender:
         """
         
         disconnect_from_db(conn, cur)
-        return None
+        return ['엽떡', '제육', '고추바사삭']
 
 class Behavior_recommender:
     def __init__(self):
@@ -177,5 +208,9 @@ class Behavior_recommender:
         return result[random.randint(0, len(result)-1)]
 
 if __name__ == "__main__":
-    recom = recommender()
-    print(recom.recommend_music_with_tags('슬픔'))
+    recom = Music_recommender()
+    print(recom.run(emotion = '행복', keywords = ['사랑']))
+    # print(recom.run(emotion = '슬픔', keywords = ['비', '새벽']))
+    
+    
+    

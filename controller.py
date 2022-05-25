@@ -42,9 +42,11 @@ class main_controller:
                 emotion = kwargs['emotion'], keywords = kwargs['keywords']
             )
             
-        else: print("There are no weather/time or emotion/keywords!")
+        else: 
+            print("Invalid parameters passed(weather/time or emotion/keywords)")
+            return None
             
-        return musics if musics else "Music: There are no recommended musics!"
+        return musics
         
     def food_recommend(self, **kwargs):
         foods = []
