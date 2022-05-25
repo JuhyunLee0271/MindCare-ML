@@ -100,23 +100,22 @@ class Music_recommender:
                 for keyword in keywords:
                     sim += self.model.wv.similarity(keyword, tag)
             similarities.append(sim)
-        return np.argsort(similarities)[::-1][:self.n_clusters//5]
+        return np.argsort(similarities)[::-1][:self.n_clusters//10]
 
     # recommend 20 musics randomly with weights
     def run(self, **kwargs):
-        isWeather, isNeutral = False, False
         isWeather = False
         if 'weather' in kwargs and 'time' in kwargs:
             keywords = [kwargs['weather'], kwargs['time']]
             sim_clusters = self.find_similar_clusters(keywords)
             isWeather = True
-        
+    
         else:
             if kwargs['emotion'] == '중립':
-                keywords = ['기쁨', *kwargs['keywords'], '슬픔']
-            
+                return self.run_neutral(kwargs['keywords'])
+
             keywords = [kwargs['emotion'], *kwargs['keywords']]
-            sim_clusters = self.find_similar_clusters(keywords[0])
+            sim_clusters = self.find_similar_clusters(kwargs['emotion'])
         
         conn, cur = connect_to_db()
 
@@ -132,7 +131,7 @@ class Music_recommender:
         res = []
         
         # weather/time 
-        if not flag:
+        if isWeather:
             for musicId, tags, cnt in target_music:
                 sim = 0
                 for tag in tags.split():
@@ -156,8 +155,8 @@ class Music_recommender:
         
         result = [musicId for musicId, sim in res[:10]]
         
-        musicId = [musicId for musicId, sim in res[10:]]
-        weights = [sim for musicId, sim in res[10:]]
+        musicId = [musicId for musicId, sim in res[10:100]]
+        weights = [sim for musicId, sim in res[10:100]]
         weights = [sim / sum(weights) for sim in weights]
 
         result.extend(np.random.choice(
@@ -167,6 +166,94 @@ class Music_recommender:
         random.shuffle(result)
                 
         recom_musics = []
+        query = "SELECT title, artist FROM MUSIC WHERE musicId = %s"
+        for m_id in result:
+            param = (m_id)
+            cur.execute(query, param)
+            recom_musics.append(cur.fetchall()[0])
+        
+        disconnect_from_db(conn, cur)
+        return recom_musics
+    
+    def run_neutral(self, keywords):
+        conn, cur = connect_to_db()
+        target_music = []
+        query = "SELECT musicId, tag, cnt FROM MUSIC WHERE label = %s"
+        
+        keywords = ['슬픔'] + keywords
+        sim_clusters = self.find_similar_clusters(keywords)
+        
+        for label in sim_clusters:
+            param = (label)
+            cur.execute(query, param)
+            target_music.extend(cur.fetchall())
+        
+        res = []
+
+        for musicId, tags, cnt in target_music:
+            sim = 0
+            for tag in tags.split():
+                for keyword in keywords:
+                    if keyword == '슬픔': sim += 10*self.model.wv.similarity(tag, keyword)
+                    else: sim += self.model.wv.similarity(tag, keyword)
+                res.append([musicId, 10*sim/(len(tags)*len(keywords)) + np.log(cnt)])
+        
+        res.sort(key=lambda x:-x[1])
+    
+        result = [musicId for musicId, sim in res[:10]]
+        
+        musicId = [musicId for musicId, sim in res[10:100]]
+        weights = [sim for musicId, sim in res[10:100]]
+        weights = [sim / sum(weights) for sim in weights]
+
+        result.extend(np.random.choice(
+            musicId, p = weights, size = 10
+        ))
+        
+        random.shuffle(result)
+        
+        recom_musics = []
+        query = "SELECT title, artist FROM MUSIC WHERE musicId = %s"
+        for m_id in result:
+            param = (m_id)
+            cur.execute(query, param)
+            recom_musics.append(cur.fetchall()[0])
+        
+        target_music = []
+        query = "SELECT musicId, tag, cnt FROM MUSIC WHERE label = %s"
+        
+        keywords = ['기쁨'] + keywords
+        sim_clusters = self.find_similar_clusters(keywords)
+
+        for label in sim_clusters:
+            param = (label)
+            cur.execute(query, param)
+            target_music.extend(cur.fetchall())
+        
+        res = []
+
+        for musicId, tags, cnt in target_music:
+            sim = 0
+            for tag in tags.split():
+                for keyword in keywords:
+                    if keyword == '기쁨': sim += 10*self.model.wv.similarity(tag, keyword)
+                    else: sim += self.model.wv.similarity(tag, keyword)
+                res.append([musicId, 10*sim/(len(tags)*len(keywords)) + np.log(cnt)])
+        
+        res.sort(key=lambda x:-x[1])
+    
+        result = [musicId for musicId, sim in res[:10]]
+        
+        musicId = [musicId for musicId, sim in res[10:100]]
+        weights = [sim for musicId, sim in res[10:100]]
+        weights = [sim / sum(weights) for sim in weights]
+
+        result.extend(np.random.choice(
+            musicId, p = weights, size = 10
+        ))
+        
+        random.shuffle(result)
+
         query = "SELECT title, artist FROM MUSIC WHERE musicId = %s"
         for m_id in result:
             param = (m_id)
@@ -209,7 +296,8 @@ class Behavior_recommender:
 
 if __name__ == "__main__":
     recom = Music_recommender()
-    print(recom.run(emotion = '행복', keywords = ['사랑']))
+    print(recom.run(emotion = '중립', keywords = []))
+    # print(recom.run(emotion = '행복', keywords = ['사랑']))
     # print(recom.run(emotion = '슬픔', keywords = ['비', '새벽']))
     
     

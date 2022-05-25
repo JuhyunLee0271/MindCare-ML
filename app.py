@@ -58,7 +58,7 @@ def diary_recommendation():
     
     if not emotion and not keywords and not content: return 'Invalid Request!'
     
-    music_list, food_list, behavior_list = [], [], []
+    music_list, music_list2, food_list, behavior_list = [], [], [], []
     
     if emotion:
         # Recommend music/food/behavior with emotion/keywords
@@ -66,8 +66,14 @@ def diary_recommendation():
         food_list = controller.food_recommend(emotion = emotion)
         behavior_list = controller.behavior_recommend(emotion = emotion)
     
+    # 중립일 경우 
+    if len(music_list) == 40:
+        music_list2 = music_list[20:] # 기쁨
+        music_list = music_list[:20] # 슬픔
+    
     return jsonify(
         musicList = music_list, 
+        musicList2 = music_list2,
         foodList = food_list, 
         behaviorList = behavior_list,
         keywordList = keywords
