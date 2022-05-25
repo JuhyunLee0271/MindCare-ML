@@ -34,11 +34,13 @@ class main_controller:
         # with kwargs, divide weather/time recommendation and emotion/keywords recommendation
         if 'weather' in kwargs and 'time' in kwargs:
             musics = self.recommender.recommend_music_with_tags(
-                kwargs['weather'], kwargs['time'])
+                weather = kwargs['weather'], time = kwargs['time'])
         
-        elif 'emotion' in kwargs and 'keywords' in kwargs:
+        # keyword is optional parameter
+        elif 'emotion' in kwargs:
             musics = self.recommender.recommend_music_with_tags(
-                kwargs['emotion'], *kwargs['keywords'])
+                emotion = kwargs['emotion'], keywords = kwargs['keywords']
+            )
             
         else: print("There are no weather/time or emotion/keywords!")
             
