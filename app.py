@@ -43,16 +43,22 @@ def weather_recommendation():
 # 감정, 키워드로 음악/행동/음식 추천(일기)
 @app.route('/music/diary', methods=["GET"])
 def diary_recommendation():
-    content = request.args.get('content')
-    if not content:
-        return 'Bad Request!'
+    emotion, keywords, content = [], [], None
+    
+    # Get parameters from request
+    if request.args.get('emoticon'): emotion = request.args.get('emoticon')
+    if request.args.get('keywords'): keywords = request.args.get('keywords')
+    if request.args.get('content'): content = request.args.get('content')
+
+    # If there is a diary(content), extract emotion and keywords from diary
+    if content:
+        controller.get_diary(content)
+        emotion.append(controller.sentiment_extract())
+        keywords.extend(controller.keyword_extract())
+    
+    if not emotion and not keywords and not content: return 'Invalid Request!'
     
     music_list, food_list, behavior_list = [], [], []
-    
-    # Get user's diary content and extract emotion/keywords from that
-    controller.get_diary(content)
-    emotion = controller.sentiment_extract()
-    keywords = controller.keyword_extract()
     
     if emotion:
         # Recommend music/food/behavior with emotion/keywords
