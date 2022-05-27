@@ -155,11 +155,11 @@ class Food_recommender:
         emo = self.emo_dict[emotion]
 
         if emo <= 2:
-            query = "SELECT menu FROM FOOD WHERE label = %s"
+            query = "SELECT name FROM FOOD WHERE label = %s"
             param = str(1)
             cur.excute(query, param)
         else:
-            cur.excute("SELECT menu FROM FOOD")
+            cur.excute("SELECT name FROM FOOD")
         foods = cur.fetchall()
         
         res, recom_foods = [], []
