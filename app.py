@@ -41,14 +41,15 @@ def weather_recommendation():
     ) if music_list else "There is no Recommendation corresponding to that weather/time"
 
 # 감정, 키워드로 음악/행동/음식 추천(일기)
-@app.route('/music/diary', methods=["GET"])
+@app.route('/music/diary', methods=["POST"])
 def diary_recommendation():
-    emotion, keywords, content = [], [], None
+    # Get POST parameters from request
+    params = request.get_json()
+    emotion = params['emoticons']
+    keywords = params['keywords']
+    content = params['content']
     
-    # Get parameters from request
-    if request.args.get('emoticon'): emotion = request.args.get('emoticon')
-    if request.args.get('keywords'): keywords = request.args.get('keywords')
-    if request.args.get('content'): content = request.args.get('content')
+    if not emotion and not keywords and not content: return 'Invalid Request!'
 
     # If there is a diary(content), extract emotion and keywords from diary
     if content:
@@ -56,15 +57,13 @@ def diary_recommendation():
         emotion.append(controller.sentiment_extract())
         keywords.extend(controller.keyword_extract())
     
-    if not emotion and not keywords and not content: return 'Invalid Request!'
-    
     music_list, music_list2, food_list, behavior_list = [], [], [], []
     
     if emotion:
         # Recommend music/food/behavior with emotion/keywords
-        music_list = controller.music_recommend(emotion = emotion, keywords = keywords)
-        food_list = controller.food_recommend(emotion = emotion)
-        behavior_list = controller.behavior_recommend(emotion = emotion)
+        music_list = controller.music_recommend(emotion = emotion[0], keywords = keywords)
+        food_list = controller.food_recommend(emotion = emotion[0])
+        behavior_list = controller.behavior_recommend(emotion = emotion[0])
     
     # 중립일 경우 
     if len(music_list) == 40:
@@ -78,6 +77,6 @@ def diary_recommendation():
         behaviorList = behavior_list,
         keywordList = keywords
         ) if music_list and food_list and behavior_list else "There is no Recommendation corresponding to that emotion!"
-
+    
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5001, debug=True)
