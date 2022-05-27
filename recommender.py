@@ -52,8 +52,8 @@ class recommender:
 
     # recommend 3 foods from user's emotion
     def recommend_food_with_emotion(self, emotion: str):
-        # self.food_recommender.run(emotion)
-        return [{'food1': '엽떡'}, {'food2': '제육'}, {'food3': '고추바사삭'}]
+        recom_foods = self.food_recommender.run(emotion)
+        return recom_foods
 
     # recommend 2 behaviors from user's emotion
     def recommend_behavior_with_emotion(self, emotion: str):
@@ -147,17 +147,35 @@ class Music_recommender:
 
 class Food_recommender:
     def __init__(self):
-        pass
+        self.model = FastText.load('./model/trained_fasttext.model')
+        self.emo_dict = {'걱정': 0, '슬픔': 1, '분노': 2, '중립': 3, '행복': 4}
     
     def run(self, emotion: str):
         conn, cur = connect_to_db()
+        emo = self.emo_dict[emotion]
+
+        if emo <= 2:
+            query = "SELECT name FROM FOOD WHERE label = %s"
+            param = str(1)
+            cur.excute(query, param)
+        else:
+            cur.excute("SELECT name FROM FOOD")
+        foods = cur.fetchall()
         
-        """
-        Food Recommendation Logic
-        """
+        res, recom_foods = [], []
+        for food in foods:
+            sim = 0
+            for keyword in keywords:
+                sim += self.model.wv.similarity(food, keyword)
+            res.append([food, sim])
+
+        res.sort(key=lambda x:-x[1])
         
+        for i in range(3):
+            recom_foods.append(res[i][0]) 
+
         disconnect_from_db(conn, cur)
-        return None
+        return recom_foods
 
 class Behavior_recommender:
     def __init__(self):
