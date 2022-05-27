@@ -36,6 +36,7 @@ import random
 from dp_api import connect_to_db, disconnect_from_db
 import numpy as np
 from gensim.models import FastText
+from gensim import models
 
 class recommender:
     def __init__(self):
@@ -57,8 +58,8 @@ class recommender:
         return recom_musics
 
     # recommend 3 foods from user's emotion
-    def recommend_food_with_emotion(self, emotion: str):
-        recom_foods = self.food_recommender.run(emotion)
+    def recommend_food_with_emotion(self, emotion: str, keywords: list):
+        recom_foods = self.food_recommender.run(emotion, keywords)
         return recom_foods
 
     # recommend 2 behaviors from user's emotion
@@ -265,21 +266,23 @@ class Music_recommender:
 
 class Food_recommender:
     def __init__(self):
-        self.model = FastText.load('./model/trained_fasttext.model')
+        # Pretrained Fasttext model
+        self.model = models.fasttext.load_facebook_model('./model/cc.ko.300.bin')
         self.emo_dict = {'걱정': 0, '슬픔': 1, '분노': 2, '중립': 3, '행복': 4}
     
-    def run(self, emotion: str):
+    def run(self, emotion: str, keywords: list):
         conn, cur = connect_to_db()
         emo = self.emo_dict[emotion]
 
         if emo <= 2:
             query = "SELECT name FROM FOOD WHERE label = %s"
             param = str(1)
-            cur.excute(query, param)
+            cur.execute(query, param)
         else:
-            cur.excute("SELECT name FROM FOOD")
-        foods = cur.fetchall()
+            cur.execute("SELECT name FROM FOOD")
         
+        foods = cur.fetchall()
+
         res, recom_foods = [], []
         for food in foods:
             sim = 0
@@ -290,7 +293,7 @@ class Food_recommender:
         res.sort(key=lambda x:-x[1])
         
         for i in range(3):
-            recom_foods.append(res[i][0]) 
+            recom_foods.append(res[i][0][0]) 
 
         disconnect_from_db(conn, cur)
         return recom_foods
@@ -314,4 +317,4 @@ class Behavior_recommender:
 
 if __name__ == "__main__":
     recom = recommender()
-    print(recom.recommend_music_with_tags('슬픔'))
+    print(recom.food_recommender.run('행복', []))

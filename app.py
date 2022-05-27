@@ -62,7 +62,7 @@ def diary_recommendation():
     if emotion:
         # Recommend music/food/behavior with emotion/keywords
         music_list = controller.music_recommend(emotion = emotion[0], keywords = keywords)
-        food_list = controller.food_recommend(emotion = emotion[0])
+        food_list = controller.food_recommend(emotion = emotion[0], keywords = keywords)
         behavior_list = controller.behavior_recommend(emotion = emotion[0])
     
     # 중립일 경우 
