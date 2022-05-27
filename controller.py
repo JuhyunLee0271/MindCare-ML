@@ -8,6 +8,7 @@ class main_controller:
         self.extractor = extractor()        # 키워드, 감정 추출 
         self.recommender = recommender()    # 음악, 행동, 음식 추천
         self.diary = None
+        print("Init Success!")
                 
     # load user's diary(content) for recommendation
     def get_diary(self, content):

@@ -51,9 +51,10 @@ def diary_recommendation():
     
     if not emotion and not keywords and not content: return 'Invalid Request!'
 
-    for emo in emotion: 
-        content += f"{ emo}"
-        keywords.append(emo)
+    if emotion:
+        for emo in emotion: 
+            content += f"{ emo}"
+            keywords.append(emo)
 
     # If there is a diary(content), extract emotion and keywords from diary
     controller.get_diary(content)

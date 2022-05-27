@@ -36,7 +36,6 @@ import random
 from dp_api import connect_to_db, disconnect_from_db
 import numpy as np
 from gensim.models import FastText
-from gensim import models
 
 class recommender:
     def __init__(self):
@@ -266,8 +265,7 @@ class Music_recommender:
 
 class Food_recommender:
     def __init__(self):
-        # Pretrained Fasttext model
-        self.model = models.fasttext.load_facebook_model('./model/cc.ko.300.bin')
+        self.model = FastText.load('./model/trained_fasttext.model')
         self.emo_dict = {'걱정': 0, '슬픔': 1, '분노': 2, '중립': 3, '행복': 4}
     
     def run(self, emotion: str, keywords: list):
