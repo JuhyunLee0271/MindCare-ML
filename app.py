@@ -71,6 +71,7 @@ def diary_recommendation():
         music_list = music_list[:20] # 슬픔
     
     return jsonify(
+        emotionList = emotion,
         musicList = music_list, 
         musicList2 = music_list2,
         foodList = food_list, 

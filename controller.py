@@ -51,7 +51,7 @@ class main_controller:
     def food_recommend(self, **kwargs):
         foods = []
         if 'emotion' in kwargs:
-            foods = self.recommender.recommend_food_with_emotion(kwargs['emotion'])
+            foods = self.recommender.recommend_food_with_emotion(kwargs['emotion'], kwargs['keywords'])
         else: print("There is no emotion!")
         
         return foods if foods else "Foods: There are no recommended foods"
