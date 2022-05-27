@@ -306,8 +306,7 @@ class Behavior_recommender:
         conn, cur = connect_to_db()
         
         query = "SELECT `name`, content FROM BEHAVIOR WHERE label = %s"
-        if emotion not in self.emo_dict: param = np.random.randint(5)
-        else: param = (self.emo_dict[emotion])
+        param = (self.emo_dict[emotion])
         
         cur.execute(query, param)
         result = cur.fetchall()

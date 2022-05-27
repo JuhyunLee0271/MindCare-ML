@@ -51,19 +51,22 @@ def diary_recommendation():
     
     if not emotion and not keywords and not content: return 'Invalid Request!'
 
+    for emo in emotion: 
+        content += f"{ emo}"
+        keywords.append(emo)
+
     # If there is a diary(content), extract emotion and keywords from diary
-    if content:
-        controller.get_diary(content)
-        emotion.append(controller.sentiment_extract())
-        keywords.extend(controller.keyword_extract())
+    controller.get_diary(content)
+    emotion = controller.sentiment_extract()
+    keywords.extend(controller.keyword_extract())
     
     music_list, music_list2, food_list, behavior_list = [], [], [], []
     
     if emotion:
         # Recommend music/food/behavior with emotion/keywords
-        music_list = controller.music_recommend(emotion = emotion[0], keywords = keywords)
-        food_list = controller.food_recommend(emotion = emotion[0], keywords = keywords)
-        behavior_list = controller.behavior_recommend(emotion = emotion[0])
+        music_list = controller.music_recommend(emotion = emotion, keywords = keywords)
+        food_list = controller.food_recommend(emotion = emotion, keywords = keywords)
+        behavior_list = controller.behavior_recommend(emotion = emotion)
     
     # 중립일 경우 
     if len(music_list) == 40:
@@ -71,7 +74,7 @@ def diary_recommendation():
         music_list = music_list[:20] # 슬픔
     
     return jsonify(
-        emotionList = emotion,
+        emotion = emotion,
         musicList = music_list, 
         musicList2 = music_list2,
         foodList = food_list, 
